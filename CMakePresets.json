@@ -1,0 +1,59 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "host-debug",
+      "displayName": "Host unit tests (Debug)",
+      "description": "不需要开发板，使用主机编译器构建 tests/host",
+      "binaryDir": "${sourceDir}/build/host",
+      "cacheVariables": {
+        "TASK_HOST": "ON",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "host-release",
+      "displayName": "Host unit tests (Release)",
+      "binaryDir": "${sourceDir}/build/host-release",
+      "cacheVariables": {
+        "TASK_HOST": "ON",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "esp32s3",
+      "displayName": "ESP32-S3 firmware (needs ESP-IDF environment)",
+      "description": "仅用于 IDE 索引；日常构建请使用 idf.py -B build/idf build",
+      "binaryDir": "${sourceDir}/build/idf",
+      "toolchainFile": "$env{IDF_PATH}/tools/cmake/toolchain-esp32s3.cmake",
+      "cacheVariables": {
+        "TASK_HOST": "OFF",
+        "IDF_TARGET": "esp32s3"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "host-debug",
+      "configurePreset": "host-debug"
+    },
+    {
+      "name": "host-release",
+      "configurePreset": "host-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "host-debug",
+      "configurePreset": "host-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

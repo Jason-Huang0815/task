@@ -1,0 +1,15 @@
+# 统一换行符，避免 Windows 同学提交 CRLF 造成整文件 diff
+* text=auto eol=lf
+
+# Windows 脚本保留 CRLF，双击才能正常运行
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制文件不做换行转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.bin binary

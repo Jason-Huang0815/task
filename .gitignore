@@ -1,0 +1,46 @@
+# ---------- 构建产物 ----------
+build/
+cmake-build-*/
+dist/
+out/
+*.o
+*.obj
+*.a
+*.lib
+*.elf
+*.map
+*.bin
+*.hex
+
+# ---------- CMake / IDE ----------
+CMakeUserPresets.json
+compile_commands.json
+.cache/
+.clangd/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# ---------- ESP-IDF ----------
+sdkconfig
+sdkconfig.old
+managed_components/
+# 注意：dependencies.lock 需要提交，保证组件版本可复现
+
+# ---------- Python ----------
+__pycache__/
+*.pyc
+.venv/
+
+# ---------- 操作系统 / 编辑器 ----------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ---------- 日志与本地数据 ----------
+*.log
+logs/
