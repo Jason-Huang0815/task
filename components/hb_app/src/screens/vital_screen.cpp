@@ -45,7 +45,7 @@ void VitalScreen::onCreate(lv_obj_t* parent) {
                                 ui::kColorHeart);
     }
 
-    m_disabled = ui::makeLabel(card, "未启用", ui::titleFont(), ui::kColorTextMuted, 330, 116);
+    m_disabled = ui::makeLabel(card, "未启用", ui::bodyFont(), ui::kColorTextMuted, 612, 22);
     ui::setVisible(m_disabled, false);
 }
 

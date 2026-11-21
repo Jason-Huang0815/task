@@ -43,7 +43,7 @@ void TempScreen::onCreate(lv_obj_t* parent) {
                                  ui::kColorTemp);
     }
 
-    m_disabled = ui::makeLabel(card, "未启用", ui::titleFont(), ui::kColorTextMuted, 330, 106);
+    m_disabled = ui::makeLabel(card, "未启用", ui::bodyFont(), ui::kColorTextMuted, 612, 22);
     ui::setVisible(m_disabled, false);
 }
 

@@ -679,3 +679,31 @@ for (;;) {
 - [ ] monitor 连续跑 10 分钟无 assert/panic，`heap_caps_get_free_size` 不单调下降，FPS ≥ 27。
 
 真机那一项做不到时，至少把前两项和“未验证”写进提交说明，不要口头说“应该没问题”。
+
+## 10. 不烧板子看界面：`sim/` 仿真工程
+
+第 5 节的三层验证能证明代码是干净的，但看不到界面。要**看到**界面（包括中文、弹窗、切页），
+用仓库根目录的 `sim/` 工程，它把同一份 `hb_ui` + `hb_app` 编成两个 Windows 程序：
+
+```powershell
+cmake -S sim -B sim/build -G "Visual Studio 17 2022" -A x64
+cmake --build sim/build --config Release -j 8
+sim/build/bin/Release/ui_sim_tests.exe      # 10 个场景、38 条断言 + 截图
+sim/build/bin/Release/ui_sim.exe            # 真窗口，按键交互
+```
+
+本机实测（2026-11-21，MSVC 19.44 / LVGL 9.2.2）：
+
+```
+--- 38 checks, 0 failed ---
+ALL UI SIM TESTS PASSED (10 cases, 0 failed)
+```
+
+截图默认落在 `sim/out/`，共 6 张：表盘、久坐弹窗、跌倒弹窗、步数注入、心率页“未启用”、字体面板。
+
+完整说明（依赖、键位、10 个场景、字体生成、常见故障、测不到的边界）见 **`docs/ui-sim.md`**。
+这里只强调两条：
+
+1. `sim/` 用到的 LVGL 源码来自 `managed_components/lvgl__lvgl`，所以**先 `idf.py build` 一次**；
+   没装 ESP-IDF 也可以手动 clone LVGL 到 `sim/third_party/lvgl` 并用 `-DLVGL_ROOT=` 指过去。
+2. 仿真**不替代**真机验收：触摸坐标、PSRAM 带宽、RGB 时序、真实帧率都测不到，那几项仍要在板子上过。
