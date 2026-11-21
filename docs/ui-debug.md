@@ -178,13 +178,43 @@ idf.py reconfigure
 | `CONFIG_LV_COLOR_DEPTH_16=y` | 16 bit / RGB565 | 32 bit 时每像素 4 B，单缓冲 1,536,000 B，双缓冲 3 MB；PSRAM 带宽和容量都不够，表现为花屏、分配失败或个位数 FPS | `findstr COLOR_DEPTH sdkconfig` |
 | `CONFIG_SPIRAM=y`<br>`CONFIG_SPIRAM_MODE_OCT=y`<br>`CONFIG_SPIRAM_SPEED_80M=y`<br>`CONFIG_SPIRAM_USE_MALLOC=y` | 八线 PSRAM，80 MHz | 800×480×2 = **768000 B**，内部 SRAM 放不下，`esp_lcd_rgb_panel` 申请帧缓冲失败，直接黑屏或重启；40 MHz 带宽余量小，动画掉帧 | `findstr SPIRAM sdkconfig`；启动日志 `spiram: Found 8MB PSRAM` |
 | `CONFIG_LV_FONT_MONTSERRAT_48=y` | 48 px 数字字体 | 数字掉回默认 14 px，表盘数字明显偏小；若代码直接引用 `lv_font_montserrat_48` 则链接报 undefined | `findstr MONTSERRAT_48 sdkconfig` |
-| `CONFIG_LV_USE_PERF_MONITOR=y` | 开 | 没有 FPS/CPU 角标，性能问题只能靠猜 | 运行后右上角应出现 `FPS:` |
+| `CONFIG_LV_USE_SYSMON=y`<br>`CONFIG_LV_USE_PERF_MONITOR=y` | 开 | 没有 FPS/CPU 角标，性能问题只能靠猜。注意 PERF_MONITOR 依赖 SYSMON，只开前者不生效 | 运行后右上角应出现 `FPS:` |
 | `CONFIG_LV_USE_LOG=y` | 开，级别建议 Warn | LVGL 内部的样式/对象/内存告警全部静默，断言时信息也更少 | `findstr LV_USE_LOG sdkconfig` |
 
 两点补充：
 
 - 本工程在 `HB_UI_HAS_CN_FONT=0` 时，`numberFont()` 和 `clockFont()` 都返回 `LV_FONT_DEFAULT`（默认 14 px）。所以「48 号没开」的直接观感是**数字变小**，不是编译报错；真机上先看字号，再怀疑字体文件。
 - PSRAM 用 Octal 还是 Quad 由板子决定。ATK-MD0430R 这类 RGB 屏方案必须 Octal 80 MHz，否则 16 MHz PCLK × 16 bit ≈ 32 MB/s 的持续带宽顶不住。
+
+### 3.1 上表五项已经在 sdkconfig.defaults 里
+
+仓库根目录的 `sdkconfig.defaults` 已经写好这些键，`idf.py set-target` / `idf.py build` 会自动生效，一般不需要再进 menuconfig：
+
+```ini
+CONFIG_LV_COLOR_DEPTH_16=y
+CONFIG_LV_FONT_MONTSERRAT_20=y
+CONFIG_LV_FONT_MONTSERRAT_24=y
+CONFIG_LV_FONT_MONTSERRAT_28=y
+CONFIG_LV_FONT_MONTSERRAT_48=y
+CONFIG_LV_USE_SYSMON=y
+CONFIG_LV_USE_PERF_MONITOR=y
+CONFIG_LV_USE_LOG=y
+CONFIG_LV_LOG_LEVEL_WARN=y
+CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240=y
+```
+
+生成的 `sdkconfig` 里能查到（本机实测）：
+
+```text
+CONFIG_LV_COLOR_DEPTH=16
+CONFIG_LV_FONT_MONTSERRAT_48=y
+CONFIG_LV_USE_SYSMON=y
+CONFIG_LV_USE_PERF_MONITOR=y
+CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ=240
+CONFIG_SPIRAM_MODE_OCT=y
+```
+
+改完 `sdkconfig.defaults` 要删掉 `sdkconfig`（或 `idf.py fullclean`）再构建，否则旧配置会被沿用。
 
 > 未在本机验证：menuconfig 的具体菜单路径随 IDF 小版本变化，本文只给 sdkconfig 键名。以 `findstr` 结果为准。
 
