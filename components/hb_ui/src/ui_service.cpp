@@ -303,7 +303,7 @@ void UiService::updateChrome(const Model& model) {
             setText(m_statusState, "未佩戴");
         } else if ((model.sit == SitPhase::Sitting || model.sit == SitPhase::Snoozed) &&
                    fmtSitting(model.sittingMin, buffer, sizeof(buffer))) {
-            char line[40];
+            char line[64];
             std::snprintf(line, sizeof(line), "久坐 %s 分钟", buffer);
             setText(m_statusState, line);
         } else {

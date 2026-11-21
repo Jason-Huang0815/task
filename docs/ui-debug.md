@@ -308,6 +308,85 @@ perf monitor 自身也吃 CPU，只用于相对比较，不要拿它当验收数
 
 ---
 
+## 4.5 本机实测：ESP-IDF v5.4.4 全量编译通过
+
+以上编译步骤已在 Windows + ESP-IDF v5.4.4 上跑通，下面的路径与输出可以直接对照。
+
+| 项 | 本机实际值 |
+| --- | --- |
+| ESP-IDF | v5.4.4，`IDF_PATH=E:\esp\v5.4.4\esp-idf` |
+| 工具目录 | `IDF_TOOLS_PATH=E:\Espressif\tools` |
+| Python 环境 | `E:\Espressif\tools\python\v5.4.4\venv\Scripts\python.exe` |
+| 激活脚本 | `C:\Espressif\tools\Microsoft.v5.4.4.PowerShell_profile.ps1` |
+| 目标 | `esp32s3` |
+
+```powershell
+# 每个新开的 PowerShell 都要先激活
+. 'C:\Espressif\tools\Microsoft.v5.4.4.PowerShell_profile.ps1'
+cd E:\things\c++\esp32\task
+
+idf.py set-target esp32s3     # 会拉组件、生成 sdkconfig
+idf.py build
+```
+
+`set-target` 的关键输出（首次会下载组件，耗时几分钟）：
+
+```text
+-- LVGL version: 9.2.2
+-- Components: ... espressif__esp_lvgl_port ... hb_app hb_common hb_driver hb_hal hb_service hb_ui ... lvgl__lvgl ...
+-- Configuring done (93.4s)
+-- Generating done (6.8s)
+```
+
+`build` 的关键输出：
+
+```text
+[108/108] ...
+task.bin binary size 0x320e0 bytes. Smallest app partition is 0x400000 bytes. 0x3cdf20 bytes (95%) free.
+Project build complete. To flash, run:
+ idf.py -p PORT flash
+```
+
+### 4.5.1 两个只有真编译才会暴露的坑
+
+**坑一：`esp_lvgl_port` 版本要比 LVGL 高一个小版本。**
+
+`esp_lvgl_port` 2.8.0 起用了 `LV_COLOR_FORMAT_RGB565_SWAPPED`（LVGL 9.3 才有），而本工程锁的是 LVGL 9.2。组件管理器只看 `>=8,<10`，于是会给你装 2.9.0，编译直接报：
+
+```text
+managed_components/espressif__esp_lvgl_port/src/lvgl9/esp_lvgl_port_disp.c:301: error:
+'LV_COLOR_FORMAT_RGB565_SWAPPED' undeclared (first use in this function)
+```
+
+所以 `components/hb_ui/idf_component.yml` 里写死上界：
+
+```yaml
+dependencies:
+  idf: ">=5.1"
+  lvgl/lvgl: "~9.2.0"
+  espressif/esp_lvgl_port: ">=2.0.0,<2.8.0"
+```
+
+如果你以后要升到 LVGL 9.3，把这条上界去掉、同时把 `lvgl/lvgl` 改成 `~9.3.0`，两边一起升。
+
+**坑二：RISC-V 下 `uint32_t` 是 `unsigned long`，不是 `unsigned int`。**
+
+`-Wformat` 在 IDF 里是 error，于是：
+
+```text
+components/hb_ui/src/model.cpp:95:43: error: format '%u' expects argument of type
+'unsigned int', but argument 5 has type 'long unsigned int' [-Werror=format=]
+```
+
+写法是显式转一次：`static_cast<unsigned>(magnitude / 100)`。同理，`char line[40]` 拼 `"久坐 %s 分钟"` 会触发 `-Werror=format-truncation`，缓冲区要留够（本工程改成 `char line[64]`）。这类问题在 MSVC 上不会出现，只有交叉编译才看得见。
+
+### 4.5.2 这次编译证明了什么、没证明什么
+
+- **证明**：7 个组件（含 `hb_ui` 的 8 个源文件、`hb_app` 的 9 个源文件）在 RISC-V 工具链下无警告编译通过，链接生成了 205 KB 的 `task.bin`，分区放得下（app 4 MB，剩余 95%）。
+- **没证明**：屏幕点亮、触摸坐标、切页动画、FPS。这些必须在板子上看，见第 4 节的烧录步骤。
+
+---
+
 ## 5. 不出硬件也能做的三层验证
 
 三层从外到内：依赖方向 → 纯逻辑 → 语法与类型。**都不能替代真机**，但能在烧录前拦掉大部分低级错误。

@@ -92,7 +92,9 @@ bool fmtTemp(const Model& model, char* out, size_t n) {
     const int32_t value = model.tempX100;
     const uint32_t magnitude = static_cast<uint32_t>(value < 0 ? -value : value);
     const char* sign = value < 0 ? "-" : "";
-    return fits(std::snprintf(out, n, "%s%u.%u", sign, magnitude / 100, (magnitude % 100) / 10), n);
+    return fits(std::snprintf(out, n, "%s%u.%u", sign, static_cast<unsigned>(magnitude / 100),
+                              static_cast<unsigned>((magnitude % 100) / 10)),
+                n);
 }
 
 bool fmtClock(uint32_t epochSec, char* out, size_t n) {
@@ -137,7 +139,9 @@ bool fmtDistance(uint32_t meters, char* out, size_t n) {
     }
     const uint32_t whole = meters / 1000;
     const uint32_t hundredths = (meters % 1000) / 10;
-    return fits(std::snprintf(out, n, "%u.%02u", whole, hundredths), n);
+    return fits(std::snprintf(out, n, "%u.%02u", static_cast<unsigned>(whole),
+                              static_cast<unsigned>(hundredths)),
+                n);
 }
 
 bool fmtKcal(uint16_t kcal, char* out, size_t n) {
@@ -163,8 +167,9 @@ bool fmtDelta(int16_t deltaX100, char* out, size_t n) {
     if (value == 0) {
         return fits(std::snprintf(out, n, "0.00"), n);
     }
-    return fits(std::snprintf(out, n, "%c%u.%02u", value > 0 ? '+' : '-', magnitude / 100,
-                              magnitude % 100),
+    return fits(std::snprintf(out, n, "%c%u.%02u", value > 0 ? '+' : '-',
+                              static_cast<unsigned>(magnitude / 100),
+                              static_cast<unsigned>(magnitude % 100)),
                 n);
 }
 
