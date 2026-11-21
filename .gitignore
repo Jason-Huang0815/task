@@ -13,7 +13,7 @@ out/
 *.hex
 
 # ---------- CMake / IDE ----------
-CMakeUserPresets.json
+CMakeUseresp32Presets.json
 compile_commands.json
 .cache/
 .clangd/
@@ -44,3 +44,10 @@ Thumbs.db
 # ---------- 日志与本地数据 ----------
 *.log
 logs/
+
+
+# 界面仿真产物（LVGL 副本可由 sim/build.ps1 自动生成，不入库）
+sim/build/
+sim/out/
+sim/sim/
+sim/third_party/
