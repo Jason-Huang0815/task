@@ -1,4 +1,7 @@
 {
+  // host:*  纯 C++ 逻辑测试（不需要 ESP-IDF，也不需要 LVGL）
+  // sim:*   PC 端界面仿真（LVGL 离屏渲染 + Win32 窗口，不需要 ESP-IDF）
+  // idf:*   固件构建与烧录（需要 ESP-IDF，命令行激活脚本写死在本机 v5.4.4）
   "version": "2.0.0",
   "tasks": [
     {
@@ -25,32 +28,69 @@
       "problemMatcher": []
     },
     {
-      "label": "idf: build",
+      "label": "sim: 构建 + 跑场景测试",
       "type": "shell",
-      "command": "idf.py",
-      "args": ["-B", "build/idf", "build"],
-      "problemMatcher": ["$gcc"]
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\sim\\build.ps1"
+      ],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
     },
     {
-      "label": "idf: flash",
+      "label": "sim: 打开交互窗口",
       "type": "shell",
-      "command": "idf.py",
-      "args": ["-B", "build/idf", "-p", "${input:comPort}", "flash"],
-      "problemMatcher": []
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\sim\\build.ps1",
+        "-Gui",
+        "-SkipTests"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
     },
     {
-      "label": "idf: monitor",
+      "label": "idf: 构建固件",
       "type": "shell",
-      "command": "idf.py",
-      "args": ["-B", "build/idf", "-p", "${input:comPort}", "monitor"],
-      "problemMatcher": []
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        ". 'C:\\Espressif\\tools\\Microsoft.v5.4.4.PowerShell_profile.ps1'; idf.py build"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "idf: 烧录并监视串口",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        ". 'C:\\Espressif\\tools\\Microsoft.v5.4.4.PowerShell_profile.ps1'; idf.py -p ${input:port} flash monitor"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
     }
   ],
   "inputs": [
     {
-      "id": "comPort",
+      "id": "port",
       "type": "promptString",
-      "description": "串口（如 COM5）",
+      "description": "串口号（例如 COM5，可在设备管理器查看）",
       "default": "COM5"
     }
   ]

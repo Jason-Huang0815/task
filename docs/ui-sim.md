@@ -42,6 +42,23 @@ cmake -S sim -B sim/build -DLVGL_ROOT=sim/third_party/lvgl
 
 ## 2. 三条命令
 
+### 2.0 一键构建（推荐）
+
+不用记命令，两条就够：
+
+```powershell
+# 配置 + 编译 + 跑 10 个场景（约 3-8 分钟，首次会编 LVGL）
+powershell -ExecutionPolicy Bypass -File sim/build.ps1
+
+# 直接打开交互窗口（按键 1-6/L/V/A/F/S，Esc 退出）
+powershell -ExecutionPolicy Bypass -File sim/build.ps1 -Gui
+```
+
+在 VS Code 里按 `Ctrl+Shift+B`，选 **sim: 构建 + 跑场景测试**（任务定义在 `.vscode/tasks.json`，同列表里还有 **sim: 打开交互窗口**）。
+`sim/build.ps1` 会自己找 LVGL：优先用 `sim/third_party/lvgl`，没有就从 `managed_components/lvgl__lvgl` 复制一份精简副本进去，所以**只要之前成功跑过一次 `idf.py build`，仿真就不需要再管 LVGL**。
+
+下面 2.1 起的命令是它内部做的事，方便你排查或手动执行。
+
 在**仓库根目录**执行：
 
 ```powershell

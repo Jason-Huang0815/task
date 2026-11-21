@@ -73,7 +73,7 @@ lv_obj_t* findClickable(lv_obj_t* obj, const char* needle) {
 
 std::string outputDir() {
     const char* env = std::getenv("SIM_OUT_DIR");
-    return (env != nullptr && env[0] != '\0') ? std::string(env) : std::string("sim/out");
+    return (env != nullptr && env[0] != '\0') ? std::string(env) : std::string("out");
 }
 
 bool ensureDir(const std::string& dir) {

@@ -7,14 +7,30 @@ set(CMAKE_C_STANDARD 11)
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 
-set(LVGL_ROOT "${REPO_ROOT}/managed_components/lvgl__lvgl" CACHE PATH "LVGL 9.2.x 源码目录")
-if(NOT EXISTS "${LVGL_ROOT}/lvgl.h")
-    message(FATAL_ERROR
-        "找不到 LVGL 源码：${LVGL_ROOT}\n"
-        "  办法 A：先在仓库根跑一次 idf.py build，组件管理器会拉下 lvgl__lvgl\n"
-        "  办法 B：git clone --depth 1 --branch v9.2.2 https://github.com/lvgl/lvgl sim/third_party/lvgl\n"
-        "          再 cmake -DLVGL_ROOT=sim/third_party/lvgl ...\n")
+# LVGL 源码查找顺序：
+#   1. -DLVGL_ROOT=...（手动指定）
+#   2. <repo>/sim/third_party/lvgl（本仓库自带的精简副本，开箱即用，不入 git）
+#   3. <repo>/managed_components/lvgl__lvgl（跑过 idf.py build 后组件管理器拉的）
+set(LVGL_ROOT "" CACHE PATH "LVGL 9.2.x 源码目录（留空自动查找）")
+if(NOT LVGL_ROOT)
+    foreach(candidate
+            "${CMAKE_CURRENT_SOURCE_DIR}/third_party/lvgl"
+            "${REPO_ROOT}/managed_components/lvgl__lvgl")
+        if(EXISTS "${candidate}/lvgl.h")
+            set(LVGL_ROOT "${candidate}")
+            break()
+        endif()
+    endforeach()
 endif()
+if(NOT LVGL_ROOT OR NOT EXISTS "${LVGL_ROOT}/lvgl.h")
+    message(FATAL_ERROR
+        "找不到 LVGL 源码。三种办法任选其一：\n"
+        "  A. 运行 sim/build.ps1（会自动从已装好的 ESP-IDF 里取一份到 sim/third_party/lvgl）\n"
+        "  B. 先在仓库根跑一次 idf.py build，组件管理器会拉下 managed_components/lvgl__lvgl\n"
+        "  C. git clone --depth 1 --branch v9.2.2 https://github.com/lvgl/lvgl sim/third_party/lvgl\n"
+        "     然后 cmake -S sim -B sim/build -DLVGL_ROOT=sim/third_party/lvgl")
+endif()
+message(STATUS "LVGL: ${LVGL_ROOT}")
 
 set(LV_CONF_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h" CACHE FILEPATH "仿真用 lv_conf.h")
 
