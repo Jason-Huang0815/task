@@ -316,7 +316,7 @@ perf monitor 自身也吃 CPU，只用于相对比较，不要拿它当验收数
 | --- | --- | --- | --- |
 | 1 分层与风格 | `python tools/check_ui_deps.py` | `hb_ui` 没越层、没有 Tab/超长行、中文字符都在字表里 | 代码能编译 |
 | 2 纯逻辑单测 | `ui_logic_tests.exe` | 格式化、导航、事件队列的行为 | 页面布局、LVGL 调用 |
-| 3 桩头编译 | `tools/ui_stub_check.ps1` | 17 个 TU 语法与类型正确、无警告 | 链接、运行、像素 |
+| 3 桩头编译 | `tools/ui_stub_check.ps1` | 16 个 TU 语法与类型正确、无警告 | 链接、运行、像素 |
 
 ### 5.1 第一层：分层与风格自检
 
@@ -376,7 +376,7 @@ ALL LOGIC TESTS PASSED
 
 ### 5.3 第三层：LVGL 桩头编译
 
-前提：在**仓库根**执行，且树里有 `components/hb_common`、`components/hb_service`、`components/hb_driver` 和 A 的 `app_controller.cpp`。
+前提：在**仓库根**执行。
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\ui_stub_check.ps1
@@ -385,22 +385,22 @@ powershell -ExecutionPolicy Bypass -File tools\ui_stub_check.ps1
 真实输出（本机执行，照抄）：
 
 ```text
-translation units: 17
+translation units: 16
 errors=0 warnings=0
 RESULT: OK (0 error, 0 warning)
 ```
 
-退出码 `EXIT=0`。判据：17 个编译单元、0 error、0 warning，最后一行 `RESULT: OK`。
+退出码 `EXIT=0`。判据：16 个编译单元、0 error、0 warning，最后一行 `RESULT: OK`。
 
-编译参数：MSVC `/std:c++17 /W4 /permissive- /utf-8`。17 个 TU = `hb_ui` 8 个源文件 + `hb_app` 9 个（`app_controller.cpp`、`ui_bridge.cpp`、7 个页面/弹层）。
+编译参数：MSVC `/std:c++17 /W4 /permissive- /utf-8`，include 路径含 `hb_ui`、`hb_app`、`hb_common`、`hb_service`、`hb_driver` 与 `tools/ui_stub`。16 个 TU = `hb_ui` 8 个源文件 + `hb_app` 8 个（`ui_bridge.cpp` + 7 个页面/弹层）。角色 A 的 `app_controller.cpp` 有 ESP-IDF 依赖，脚本**按设计排除**它。
 
 失败时看哪里：
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
-| `translation units: 16` | 树里没有 `app_controller.cpp` | 那是 A 的文件，合并后才是 17；只想验 E 的代码可接受 16 |
-| `common/events.h: No such file` | include 路径缺 `hb_common` | 确认从仓库根执行、`components/hb_common/include` 存在 |
-| `service/event_bus.h: No such file` | 缺 `hb_service`/`hb_driver` 头路径 | 把两者加进脚本的 `$includes` 或 `INCLUDE` 环境变量 |
+| `common/events.h` 里一堆 `C2059 语法错误:“}”` / `C2338 static_assert` | MSVC 没加 `/utf-8`，按 GBK 读 UTF-8 源码，句末“。”吃掉换行，下一行声明被并进注释 | 本仓库的 `tests/host/CMakeLists.txt` 已给 `hb_service`、`task_tests`、`hb_ui_logic`、`ui_logic_tests` 加 `/utf-8`；自建工程照抄 |
+| `service/event_bus.h: No such file` | 缺 `hb_service`/`hb_driver` 头路径 | 本脚本已默认加入；自建工程要自己加 |
+| `translation units` 数量对不上 | 少拷了源文件 | 对照 `docs/ui-api.md` 第 11 节的交付文件清单 |
 | 出现 warning | 脚本把 warning 也判失败 | 按 `/W4` 提示改，不要关警告 |
 
 桩头在 `tools/ui_stub/lvgl.h`，只声明工程实际用到的 LVGL 9 API。它**不证明**链接、运行时行为和像素输出——这三件事只能上板。
@@ -565,7 +565,7 @@ for (;;) {
 
 - [ ] `python tools/check_ui_deps.py` 输出 `OK: layers and style look clean`，退出码 0。
 - [ ] `tests\host\build\Release\ui_logic_tests.exe` 输出 `18 cases, 0 failed` 与 `ALL LOGIC TESTS PASSED`。
-- [ ] `tools\ui_stub_check.ps1` 输出 `translation units: 17`、`errors=0 warnings=0`、`EXIT=0`。
+- [ ] `tools\ui_stub_check.ps1` 输出 `translation units: 16`、`errors=0 warnings=0`、`EXIT=0`。
 - [ ] 真机冷启动 5 s 内出现表盘；短按能环形切完 6 页；长按能灭屏/恢复；页点跟随当前页。
 - [ ] monitor 连续跑 10 分钟无 assert/panic，`heap_caps_get_free_size` 不单调下降，FPS ≥ 27。
 
